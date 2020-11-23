@@ -22,138 +22,195 @@
 unsigned char led0_output = 0x00;
 unsigned char led1_output = 0x00;
 unsigned char keypad_output = 0x00;
-unsigned char passcode[6] = {'#', '1', '2', '3', '4', '5'};
-unsigned char i;
 unsigned char pause = 0;
 
 enum pauseButtonSM_States {pauseButton_wait, pauseButton_press, pauseButton_release};
 
-int pauseButtonSMTick(int sm_currState)
-{
+int pauseButtonSMTick(int state) {
     unsigned char press = ~PINA & 0x01;
 
-    switch(sm_currState) {
+    switch(state) {
         case pauseButton_wait:
-            sm_currState = press == 0x01 ? pauseButton_press : pauseButton_wait;
-            break;
+            state = press == 0x01 ? pauseButton_press : pauseButton_wait; break;
         case pauseButton_press:
-            sm_currState = pauseButton_release;
-            break;
+            state = pauseButton_release; break;
         case pauseButton_release:
-            sm_currState = press == 0x00 ? pauseButton_wait : pauseButton_press;
-            break;
-        default:
-            sm_currState = pauseButton_wait; break;
+            state = press == 0x00 ? pauseButton_wait : pauseButton_press; break;
+        default: state = pauseButton_wait; break;
     }
-    switch(sm_currState)
-    {
-        case pauseButton_wait:
-            break;
+    switch(state) {
+        case pauseButton_wait: break;
         case pauseButton_press:
-            pause = (pause == 0) ? 1 : 0;
+            pause = (pause == 0) ? 1 : 0; //toggle pause
             break;
-        case pauseButton_release:
-            break;
+        case pauseButton_release: break;
     }
-    return sm_currState;
+    return state;
 }
 
 enum toggleLED0_State {toggleLED0_wait, toggleLED0_blink};
 
-int toggleLED0SMTick(int led0_currState) {
-    switch(led0_currState) {
-        case toggleLED0_wait:
-            led0_currState = !pause ? toggleLED0_blink: toggleLED0_wait;
-            break;
-        case toggleLED0_blink:
-            led0_currState = pause ? toggleLED0_wait: toggleLED0_blink;
-            break;
-        default:
-            led0_currState = toggleLED0_wait;
-            break;
+int toggleLED0SMTick(int state) {
+    switch(state) {
+        case toggleLED0_wait: state = !pause ? toggleLED0_blink: toggleLED0_wait; break;
+        case toggleLED0_blink: state = pause ? toggleLED0_wait: toggleLED0_blink; break;
+        default: state = toggleLED0_wait; break;
     }
-    switch(led0_currState)
-    {
-        case toggleLED0_wait:
-            break;
+    switch(state) {
+        case toggleLED0_wait: break;
         case toggleLED0_blink:
             led0_output = (led0_output == 0x00) ? 0x01 : 0x00;
             break;
     }
-    return led0_currState;
+    return state;
 }
 
 enum toggleLED1_State {toggleLED1_wait, toggleLED1_blink};
 
-int toggleLED1SMTick(int LED1_currState)
-{
-    switch(LED1_currState) {
-        case toggleLED1_wait:
-            LED1_currState = !pause ? toggleLED1_blink: toggleLED1_wait;
-            break;
-        case toggleLED1_blink:
-            LED1_currState = pause ? toggleLED1_wait: toggleLED1_blink;
-            break;
-        default:
-            LED1_currState = toggleLED1_wait;
-            break;
+int toggleLED1SMTick(int state) {
+    switch(state) {
+        case toggleLED1_wait: state = !pause ? toggleLED1_blink: toggleLED1_wait; break;
+        case toggleLED1_blink: state = pause ? toggleLED1_wait: toggleLED1_blink; break;
+        default: state = toggleLED1_wait; break;
     }
-    switch(LED1_currState)
-    {
-        case toggleLED1_wait:
-            break;
+    switch(state) {
+        case toggleLED1_wait: break;
         case toggleLED1_blink:
             led1_output = (led1_output == 0x00) ? 0x01: 0x00;
             break;
     }
-    return LED1_currState;
+    return state;
 }
 
 enum display_States {display_display};
 
-int displaySMTick(int dis_sm_currState)
-{
-    switch(dis_sm_currState)
-    {
-         case display_display:
-            dis_sm_currState = display_display;
-            break;
-         default:
-            dis_sm_currState = display_display;
-            break;
-     }
-     switch (dis_sm_currState)
-     {
-         case display_display:
-             
-             for(i = 0, i < 6; i++)
-            {
-                 if (keypad_output == passcode[i])
-                 {
-                     i++;
-                     dis_sm_currState = display_display;
-                 }
-                else if(keypad_output == '#')
-                {
-                    i = 0;
-                    dis_sm_currState = display_display;
-                }
-                else
-                {
-                    i = 0;
-                    dis_sm_currState = display_display;
-                }
-            }
-         break;
-     }
-    return dis_sm_currState;
+int displaySMTick(int state) {
+    //unsigned char output;
+
+ switch(state) {
+     case display_display: state = display_display; break;
+     default: state = display_display; break;
  }
+ switch (state) {
+     case display_display:
+     if (keypad_output != 0x1F) {
+         PORTB = 0x80; // 1000 0000
+     }
+     else {
+         PORTB = 0x00;
+     }
+     break;
+ }
+ return state;
+ }
+
+//SM for part2
+unsigned char tempB = 0x00;
+enum lock_states {lock_L, lock_hashP, lock_hashR, lock_oneP, lock_oneR,
+                    lock_twoP, lock_twoR, lock_threeP, lock_threeR,
+                    lock_fourP, lock_fourR, lock_U} lock_state;
+
+void lockSMTick() {
+    switch (lock_state) {
+        case lock_L: // curr = locked ... next = hashP ('#')
+            lock_state = (keypad_output == 0x0F) ? lock_hashP : lock_L;
+            break;
+        case lock_hashP: // curr = hashP ('#') ... next = hashR ('')
+            if (keypad_output == 0x1F) { lock_state = lock_hashR; }
+            else if (keypad_output == 0x0F) { lock_state = lock_hashP; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_hashR: // curr = hashR ('') ... next = oneP ('1')
+            if (keypad_output == 0x01) { lock_state = lock_oneP; }
+            else if (keypad_output == 0x1F) { lock_state = lock_hashR; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_oneP: // curr = oneP ('1') ... next = oneR ('')
+            if (keypad_output == 0x1F) { lock_state = lock_oneR; }
+            else if (keypad_output == 0x01) { lock_state = lock_oneP; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_oneR: // curr = oneR ('') ... next = twoP ('2')
+            if (keypad_output == 0x02) { lock_state = lock_twoP; }
+            else if (keypad_output == 0x1F) { lock_state = lock_oneR; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_twoP: // curr = twoP ('2') ... next = twoR ('')
+            if (keypad_output == 0x1F) { lock_state = lock_twoR; }
+            else if (keypad_output == 0x02) { lock_state = lock_twoP; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_twoR: // curr = twoR ('') ... next = threeP ('3')
+            if (keypad_output == 0x03) { lock_state = lock_threeP; }
+            else if (keypad_output == 0x1F) { lock_state = lock_twoR; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_threeP: // curr = threeP ('3') ... next = threeR ('')
+            if (keypad_output == 0x1F) { lock_state = lock_threeR; }
+            else if (keypad_output == 0x03) { lock_state = lock_threeP; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_threeR: // curr = threeR ('') ... next = fourP ('4')
+            if (keypad_output == 0x04) { lock_state = lock_fourP; }
+            else if (keypad_output == 0x1F) { lock_state = lock_threeR; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_fourP: // curr = fourP ('4') ... next = fourR ('')
+            if (keypad_output == 0x1F) { lock_state = lock_fourR; }
+            else if (keypad_output == 0x04) { lock_state = lock_fourP; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_fourR: // curr = fourR ('') ... next = lock_U ('5')
+            if (keypad_output == 0x05) { lock_state = lock_U; }
+            else if (keypad_output == 0x1F) { lock_state = lock_fourR; }
+            else { lock_state = lock_L; }
+            break;
+        case lock_U: // curr = U (B7 = 0) ... next = lock (B7 = 1)
+            lock_state = (tempB) ? lock_L : lock_U ;
+            break;
+
+        default:
+            break;
+    }
+
+    switch (lock_state) {
+        case lock_L:
+            PORTB &= 0x80; // don't touch B7 (input), set everything else to 0
+            break;
+        case lock_hashP:
+            break;
+        case lock_hashR:
+            break;
+        case lock_oneP:
+            break;
+        case lock_oneR:
+            break;
+        case lock_twoP:
+            break;
+        case lock_twoR:
+            break;
+        case lock_threeP:
+            break;
+        case lock_threeR:
+            break;
+        case lock_fourP:
+            break;
+        case lock_fourR:
+            break;
+        case lock_U:
+            PORTB |= 0x01; // don't touch B7 (input), set B0 to 1
+            break;
+
+        default:
+            break;
+    }
+}
 
 enum keypad_States {keypad_keypad};
 
-int keypadSMTick(int kp_currState) {
+int keypadSMTick(int state) {
     unsigned char x;
-    switch (kp_currState) {
+    switch (state) {
         case keypad_keypad:
             x = GetKeypadKey();
             switch (x) {
@@ -176,88 +233,181 @@ int keypadSMTick(int kp_currState) {
                 case '#': keypad_output = 0x0F; break;
                 default: keypad_output = 0x1B; break;
             }
-            kp_currState = keypad_keypad;
+            state = keypad_keypad;
             break;
 
-        default:
-            kp_currState = keypad_keypad;
-            break;
+        default: state = keypad_keypad; break;
     }
 
-    switch (kp_currState) {
+    switch (state) {
         default: break;
     }
     
-    return kp_currState;
+    return state;
 }
 
+void set_PWM(double frequency) {
+    static double current_frequency;
+
+    if (frequency != current_frequency) {
+        if (!frequency) {
+            TCCR3B &= 0x08;
+        }
+        else {
+            TCCR3B |= 0x03;
+        }
+        if (frequency < 0.954){
+            OCR3A = 0xFFFF;
+        }
+        else if (frequency > 31250) {
+            OCR3A = 0x0000;
+        }
+        else {
+            OCR3A = (short)(8000000 / (128 * frequency)) - 1;
+        }
+
+        TCNT3 = 0;
+        current_frequency = frequency;
+    }
+}
+
+void PWM_on() {
+    TCCR3A = (1 << COM3A0);
+    TCCR3B = (1 << WGM32) | (1 << CS31) | (1 << CS30);
+    set_PWM(0);
+}
+
+void PWM_off() {
+    TCCR3A = 0x00;
+    TCCR3B = 0x00;
+}
+
+enum States {Start, Wait, Play, Pressed} state;
+
+unsigned char tempA = 0x00;
+unsigned char z = 0x00;
+double tune [] = {261.63, 432.43, 345.32, 700.34, 219.4};
+
+void doorbellSMTick() {
+  switch(state) {
+    case Start:
+        state = Wait;
+        break;
+    case Wait:
+          if (tempA == 0x80) {
+              state = Play;
+              z = 0x00;
+          }
+          else {
+              state = Wait;
+          }
+        break;
+    case Play:
+          if (z < 4) {
+              state = Play;
+          }
+          else {
+              state = Pressed;
+          }
+          break;
+    case Pressed:
+        if (tempA == 0x80) {
+            state = Pressed;
+        }
+        else {
+            state = Wait;
+        }
+        break;
+    default:
+        state = Start;
+        break;
+  }
+
+  switch(state) {
+    case Start:
+        break;
+    case Wait:
+        break;
+    case Play:
+        set_PWM(tune[z]);
+        z++;
+        break;
+    case Pressed:
+        set_PWM(0);
+        break;
+    default:
+        break;
+  }
+}
 
 int main(void) {
     /* Insert DDR and PORT initializations */
-    DDRA = 0x00;
-    PORTA = 0xFF;
-    DDRB = 0xFF;
-    PORTB = 0x00;
-    DDRC = 0xF0;
-    PORTC = 0x0F;
+    DDRA = 0x00; PORTA = 0xFF;
+    DDRB = 0x7F; PORTB = 0x80; // B7 is an input
+    DDRC = 0xF0; PORTC = 0x0F;
+    /* Insert your solution below */
     
-    static task task1, task2, task3, task4, task5;
-    task *tasks[] = {&task1, &task2, &task3, &task4, &task5};
+    static task task1, task2, task3, task4, task5, task6;
+    task *tasks[] = {&task1, &task2, &task3, &task4, &task5, &task6};
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
     const char start = -1;
 
-    
+    //Task1
     task1.state = start;
     task1.period = 50;
     task1.elapsedTime = task1.period;
     task1.TickFct = &pauseButtonSMTick;
-    
+    //Task2
     task2.state = start;
     task2.period = 500;
     task2.elapsedTime = task2.period;
     task2.TickFct = &toggleLED0SMTick;
-    
+    //Task3
     task3.state = start;
     task3.period = 1000;
     task3.elapsedTime = task3.period;
     task3.TickFct = &toggleLED1SMTick;
-    
+    //Task4
     task4.state = start;
     task4.period = 10;
     task4.elapsedTime = task4.period;
-    task4.TickFct = &displaySMTick;
-    
+    task4.TickFct = &lockSMTick;
+    //Task5
     task5.state = start;
     task5.period = 100;
     task5.elapsedTime = task5.period;
     task5.TickFct = &keypadSMTick;
+    //Task6
+    task6.state = Start;
+    z = 0x00;
+    task6.period = 200;
+    task6.elapsedTime = task6.period;
+    task6.TickFct = &doorbellSMTick;
 
     unsigned long GCD = tasks[0]->period;
     unsigned short i;
-    for (i = 1; i < numTasks; i++)
-    {
+    for (i = 1; i < numTasks; i++) {
         GCD = findGCD(GCD, tasks[i]->period);
     }
 
     TimerSet(GCD);
     TimerOn();
+    PWM_on();
 
+    // unsigned short i;
     while (1) {
-        for (i = 0; i < numTasks; i++)
-        {
-            if (tasks[i]->elapsedTime == tasks[i]->period)
-            {
+        for (i = 0; i < numTasks; i++) {
+            tempA = ~PINA;
+            tempB = ~PINB & 0x80; // isolate B7
+            if (tasks[i]->elapsedTime == tasks[i]->period) {
                 tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
                 tasks[i]->elapsedTime = 0;
             }
             tasks[i]->elapsedTime += GCD;
         }
 
-        while(!TimerFlag)
-        {
-            
-        }
+        while(!TimerFlag);
         TimerFlag = 0;
     }
     
