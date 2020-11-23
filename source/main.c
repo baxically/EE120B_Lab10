@@ -92,10 +92,10 @@ int keypadSMTick(int kp_currState)
             break;
 
         default:
-            cp_currState = kp_keypad;
+            kp_currState = kp_keypad;
             break;
         }
-    return state;
+    return kp_currState;
 }
 
 enum display_states {dp_display};
