@@ -2,7 +2,7 @@
  *  Partner(s) Name:
  *    Lab Section:
  *    Assignment: Lab #10  Exercise #1
- *    Exercise Description: [optional - include for your own benefit]
+ *    Exercise Description: Modify the keypad code to be in an SM task and add an LED on PB7 then will light up while any button is pressed, consider this immediate feedback to the user. Then, modify the keypad SM to utilize the simple task scheduler format. All code from here on out should use the task scheduler. 
  *
  *    I acknowledge all content contained herein, excluding template or example
  *    code, is my own original work.

@@ -22,6 +22,8 @@
 unsigned char led0_output = 0x00;
 unsigned char led1_output = 0x00;
 unsigned char keypad_output = 0x00;
+unsigned char passcode[6] = {'#', '1', '2', '3', '4', '5'};
+unsigned char i;
 unsigned char pause = 0;
 
 enum pauseButtonSM_States {pauseButton_wait, pauseButton_press, pauseButton_release};
@@ -114,21 +116,34 @@ int displaySMTick(int dis_sm_currState)
     switch(dis_sm_currState)
     {
          case display_display:
-            dis_sm_currState = display_display; break;
+            dis_sm_currState = display_display;
+            break;
          default:
-            dis_sm_currState = display_display; break;
+            dis_sm_currState = display_display;
+            break;
      }
      switch (dis_sm_currState)
      {
          case display_display:
-         if (keypad_output != 0x1F)
-         {
-             PORTB = 0x80;
-         }
-         else
-         {
-             PORTB = 0x00;
-         }
+             
+             for(i = 0, i < 6; i++)
+            {
+                 if (keypad_output == passcode[i])
+                 {
+                     i++;
+                     dis_sm_currState = display_display;
+                 }
+                else if(keypad_output == '#')
+                {
+                    i = 0;
+                    dis_sm_currState = display_display;
+                }
+                else
+                {
+                    i = 0;
+                    dis_sm_currState = display_display;
+                }
+            }
          break;
      }
     return dis_sm_currState;
