@@ -9,15 +9,13 @@
  *    DEMO LNIK: https://drive.google.com/file/d/1UIuBYMWZBbBueUrf1mkw0ISrier-4I6-/view?usp=sharing
  */
 #include <avr/io.h>
-// #include <avr/interrupt.h>
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
-#endif
-
 #include "bit.h"
 #include "keypad.h"
 #include "scheduler.h"
 #include "timer.h"
+#endif
 
 unsigned char led0_output = 0x00;
 unsigned char led1_output = 0x00;
