@@ -1,12 +1,16 @@
 /*    Author: Ally  Thach, athac007
  *  Partner(s) Name:
  *    Lab Section:
- *    Assignment: Lab #10  Exercise #2
- *    Exercise Description: A household has a digital combination deadbolt lock system on the doorway. The system has buttons on a keypad. Pressing and releasing '#', then pressing and releasing the sequence '1',’2’,’3’,’4’,’5’, should unlock the door by setting PB0 to 1. Anytime you press and release the ‘#’ key this indicates the user is starting at the beginning of the sequence. Since we don’t have a solenoid or motor for locking, we will use an LED to represent this state. Any other sequence fails to unlock. Pressing a button from inside the house (PB7) locks the door (PB0=0). Be sure to check that only one button is pressed at a time.
+ *    Assignment: Lab #10  Exercise #3
+ *    Exercise Description: You will now add a doorbell SM to this system. On PA7 add another button that will represent the doorbell button on the outside of the house. On PB6 you will attach the speaker from the previous lab and add that SM to your ever growing system. The functionality of this SM should be:
+ Once the button is pressed (check every 200 ms)
+ The speaker goes through a short (roughly 3 second) melody
+ During the melody, pressing the button will do nothing
+
  *
  *    I acknowledge all content contained herein, excluding template or example
  *    code, is my own original work.
- *    DEMO LNIK: https://drive.google.com/file/d/1QLpaQQ08vu6fvxlY9h9pk_bdA7NSHc6V/view?usp=sharing
+ *    DEMO LNIK: https://drive.google.com/file/d/1AVeZbBDR7TBEmFB3P6hSxZI_0S78HJH2/view?usp=sharing
  */
 #include <avr/io.h>
 #ifdef _SIMULATE_
