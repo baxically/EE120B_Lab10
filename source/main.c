@@ -30,7 +30,7 @@ int pauseButtonSMTick(int sm_currState)
 {
     unsigned char press = ~PINA & 0x01;
 
-    switch(cm_currState) {
+    switch(sm_currState) {
         case pauseButton_wait:
             sm_currState = press == 0x01 ? pauseButton_press : pauseButton_wait;
             break;
@@ -59,7 +59,7 @@ int pauseButtonSMTick(int sm_currState)
 enum toggleLED0_State {toggleLED0_wait, toggleLED0_blink};
 
 int toggleLED0SMTick(int led0_currState) {
-    switch(state) {
+    switch(led0_currState) {
         case toggleLED0_wait:
             led0_currState = !pause ? toggleLED0_blink: toggleLED0_wait;
             break;
@@ -70,7 +70,7 @@ int toggleLED0SMTick(int led0_currState) {
             led0_currState = toggleLED0_wait;
             break;
     }
-    switch(led0_currSstate)
+    switch(led0_currState)
     {
         case toggleLED0_wait:
             break;
@@ -96,7 +96,7 @@ int toggleLED1SMTick(int LED1_currState)
             LED1_currState = toggleLED1_wait;
             break;
     }
-    switch(state)
+    switch(LED1_currState)
     {
         case toggleLED1_wait:
             break;
